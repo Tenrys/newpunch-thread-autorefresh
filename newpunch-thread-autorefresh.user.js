@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newpunch Thread Auto-refresh
 // @namespace    tenrys.pw
-// @version      0.5
+// @version      0.5.1
 // @description  Checks for new posts in a thread on an interval and adds them to the page dynamically.
 // @author       Tenrys (https://github.com/Tenrys/newpunch-thread-autorefresh)
 // @include      https://forum.facepunch.com/*
@@ -33,6 +33,21 @@ var refresher = new Vue({
         this.checkPageEnded()
 
         this.timerInterval = setInterval(() => {
+            if (this.pageEnded) {
+                if ("Notification" in window && Notification.permission == "granted") {
+                    new Notification(this.originalPageTitle, {
+                        body: "Page has ended, click to go to new page",
+                        onclick() {
+                            window.location = this.getNextPage()[0]
+                        },
+                        tag: "page-ended",
+                    })
+                }
+
+                clearInterval(this.timerInterval)
+                return
+            }
+
             this.refreshPage()
         }, 1000)
 
@@ -79,18 +94,6 @@ var refresher = new Vue({
                                     pagination.appendChild(newPageLink)
                                 }
                             })
-
-                            if ("Notification" in window && Notification.permission == "granted") {
-                                new Notification(this.originalPageTitle, {
-                                    body: "Page has ended, click to go to new page",
-                                    onclick() {
-                                        window.location = this.getNextPage()[0]
-                                    },
-                                    tag: "page-ended",
-                                })
-                            }
-
-                            clearInterval(this.timerInterval)
                         }
                     }
                 }
@@ -163,7 +166,7 @@ var refresher = new Vue({
                                 }
                             }
                             if (!addedPost) {
-                                // this.timerLength = Math.min(this.timerLength + 5, 120)
+                                this.timerLength = Math.min(this.timerLength + 5, 120)
                             } else {
                                 this.timerLength = 10
                             }

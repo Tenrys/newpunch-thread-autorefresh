@@ -2,7 +2,7 @@
 
 Checks for new posts in a Facepunch forum thread on an interval and adds them to the page dynamically.
 
-# [Install]()
+# [Install](https://github.com/Tenrys/newpunch-thread-autorefresh/raw/master/newpunch-thread-autorefresh.user.js)
 
 You need a userscript extension such as Tampermonkey or Greasemonkey to be installed in your browser for this to work.
 

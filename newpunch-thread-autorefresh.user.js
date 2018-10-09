@@ -51,9 +51,11 @@ var refresher = new Vue({
             this.refreshPage()
         }, 1000)
 
-        document.addEventListener("focus", () => {
-            this.newPostCount = 0
-            document.title = this.originalPageTitle
+        ["focus", "focusin"].forEach(evt => {
+            document.addEventListener(evt, () => {
+                this.newPostCount = 0
+                document.title = this.originalPageTitle
+            })
         })
     },
     methods: {

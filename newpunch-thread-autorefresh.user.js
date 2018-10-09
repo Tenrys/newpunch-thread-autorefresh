@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newpunch Thread Auto-refresh
 // @namespace    tenrys.pw
-// @version      0.5.6
+// @version      0.5.7
 // @description  Checks for new posts in a thread on an interval and adds them to the page dynamically.
 // @author       Tenrys (https://github.com/Tenrys/newpunch-thread-autorefresh)
 // @include      https://forum.facepunch.com/*
@@ -21,10 +21,11 @@ var refresher = new Vue({
             timerLength: 10,
             ajaxHappening: false,
             pageEnded: false,
+            originalPageTitle: document.title,
+            updatedOnce: false,
 
             timerInterval: null,
             newPostCount: 0,
-            originalPageTitle: document.title
         }
     },
     mounted() {
@@ -33,15 +34,15 @@ var refresher = new Vue({
         this.checkPageEnded()
 
         this.timerInterval = setInterval(() => {
-            if (this.pageEnded) {
+            if (this.pageEnded && this.updatedOnce) {
                 if ("Notification" in window && Notification.permission == "granted") {
-                    new Notification(this.originalPageTitle, {
+                    let notification = new Notification(this.originalPageTitle, {
                         body: "Page has ended, click to go to new page",
-                        onclick() {
-                            window.location = this.getNextPage()[0]
-                        },
                         tag: "page-ended",
                     })
+                    notification.onclick = () => {
+                        window.location = this.getNextPage()[0]
+                    }
                 }
 
                 clearInterval(this.timerInterval)
@@ -162,6 +163,7 @@ var refresher = new Vue({
                                     }
 
                                     addedPost = true
+                                    this.updatedOnce = true
                                     console.log("Added new post! ", post.$el)
                                 }
                             }

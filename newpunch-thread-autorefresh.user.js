@@ -82,7 +82,7 @@ var refresher = new Vue({
                             ].forEach(pagination => {
                                 let hasURL = false
                                 for (let i = 0; i < pagination.children.length; i++) {
-                                    if (newPageURL.match(pagination.children[i].href)) {
+                                    if (newPageURL == pagination.children[i].href) {
                                         hasURL = true
                                         break
                                     }

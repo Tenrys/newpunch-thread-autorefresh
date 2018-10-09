@@ -85,20 +85,22 @@ var refresher = new Vue({
 
                                     currentPostlist.appendChild(post.$el)
 
-                                    if ("Notification" in window && Notification.permission == "granted") {
-                                        let followingButton = document.querySelector(".threadsubscribe span.is-primary a")
+                                    post.$nextTick(() => {
+                                        if ("Notification" in window && Notification.permission == "granted") {
+                                            let followingButton = document.querySelector(".threadsubscribe span.is-primary a")
 
-                                        if (followingButton.classList.contains("is-primary")) {
-                                            // To-do: service worker..? Check how much interest there is
+                                            if (followingButton.classList.contains("is-primary")) {
+                                                // To-do: service worker..? Check how much interest there is
 
-                                            new Notification(this.originalPageTitle, {
-                                                body: `New post from ${post.username}!`,
-                                                icon: post.avatar,
-                                                tag: "new-post",
-                                                vibrate: [200, 100, 200] // This won't be used but whatever
-                                            })
+                                                new Notification(this.originalPageTitle, {
+                                                    body: `New post from ${post.username}!`,
+                                                    icon: post.avatar,
+                                                    tag: "new-post",
+                                                    vibrate: [200, 100, 200] // This won't be used but whatever
+                                                })
+                                            }
                                         }
-                                    }
+                                    })
 
                                     console.log("Added new post! ", post.$el)
 

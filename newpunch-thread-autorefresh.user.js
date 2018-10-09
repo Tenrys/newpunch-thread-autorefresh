@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newpunch Thread Auto-refresh
 // @namespace    tenrys.pw
-// @version      0.5.3
+// @version      0.5.4
 // @description  Checks for new posts in a thread on an interval and adds them to the page dynamically.
 // @author       Tenrys (https://github.com/Tenrys/newpunch-thread-autorefresh)
 // @include      https://forum.facepunch.com/*
@@ -49,7 +49,7 @@ var refresher = new Vue({
             }
 
             this.refreshPage()
-        }, 1000)
+        }, 1000);
 
         ["focus", "focusin"].forEach(evt => {
             document.addEventListener(evt, () => {

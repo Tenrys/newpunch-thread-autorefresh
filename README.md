@@ -13,3 +13,8 @@ Supports browser notifications if you leave the tab open, and even changes the t
 You need a userscript extension such as Tampermonkey or Greasemonkey to be installed in your browser for this to work.
 
 Tested on Firefox 62.0.3 (64-bit), please create an issue if you run into any problems.
+
+# Credits
+
+- [uwx](https://github.com/uwx) for helping me look into how to work with existing Vue components
+

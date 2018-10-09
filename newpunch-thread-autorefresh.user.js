@@ -51,9 +51,11 @@ var refresher = new Vue({
             this.refreshPage()
         }, 1000)
 
-        document.addEventListener("focusin", () => {
-            this.newPostCount = 0
-            document.title = this.originalPageTitle
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState == "visible") {
+                this.newPostCount = 0
+                document.title = this.originalPageTitle
+            }
         })
     },
     methods: {

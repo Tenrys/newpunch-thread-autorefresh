@@ -12,7 +12,7 @@ Supports browser notifications if you leave the tab open, and even changes the t
 
 You need a userscript extension such as Tampermonkey or Greasemonkey to be installed in your browser for this to work.
 
-Tested on Firefox 62.0.3 (64-bit), please create an issue if you run into any problems.
+Tested on Firefox 62.0.3 (64-bit) and Microsoft Edge 42.17134.1.0, please create an issue if you run into any problems.
 
 # Credits
 

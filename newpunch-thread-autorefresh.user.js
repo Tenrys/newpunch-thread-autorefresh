@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newpunch Thread Auto-refresh
 // @namespace    tenrys.pw
-// @version      0.5.1
+// @version      0.5.2
 // @description  Checks for new posts in a thread on an interval and adds them to the page dynamically.
 // @author       Tenrys (https://github.com/Tenrys/newpunch-thread-autorefresh)
 // @include      https://forum.facepunch.com/*
@@ -135,15 +135,15 @@ var refresher = new Vue({
 
                                                         let postrender = document.querySelector(`#${this.$el.id} .postrender`).__vue__
 
-                                                        new Notification(pageTitle, {
+                                                        let notification = new Notification(pageTitle, {
                                                             body: `New post from ${postrender.username}!`,
                                                             icon: postrender.avatar,
-                                                            tag: "new-post",
-                                                            onclick() {
-                                                                if (this.$el.scrollIntoView) this.$el.scrollIntoView()
-                                                            },
+                                                            tag: `new-post-${this.$el.id}`,
                                                             vibrate: [200, 100, 200] // This won't be used but whatever
                                                         })
+                                                        notification.onclick = () => {
+                                                            if (this.$el.scrollIntoView) this.$el.scrollIntoView()
+                                                        }
                                                     }
                                                 }
                                             })

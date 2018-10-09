@@ -2,7 +2,11 @@
 
 ![Preview](https://tenrys.pw/ShareX/2018/Oct/iSM7.png)
 
-Checks for new posts in a Facepunch forum thread on an interval and adds them to the page dynamically.
+It checks every few seconds for new posts, taking increasingly longer if nothing was found, and resetting on find.
+
+If the script finds out a new page has started, it'll stop looking and tell you, as well as attempt to add a link to the new page in the page navigation.
+
+Supports browser notifications if you leave the tab open, and even changes the tab title until you focus back into the page.
 
 # [Install](https://github.com/Tenrys/newpunch-thread-autorefresh/raw/master/newpunch-thread-autorefresh.user.js)
 

@@ -112,15 +112,11 @@ var refresher = new Vue({
                             let parser = new DOMParser()
                             let pageDocument = parser.parseFromString(ajax.responseText, "text/html")
 
-                            // Remove "unseen" element new page, causes issues
-                            let unseen = pageDocument.querySelector(".postlist #unseen")
-                            if (unseen) unseen.remove()
-
                             // Add new posts to current postlist
                             let newPostlist = pageDocument.querySelector('[class="postlist"]')
                             let addedPost = false
                             for (let i = 0; i < newPostlist.children.length; i++) {
-                                if (!currentPostlist.children[i]) {
+                                if (!currentPostlist.children.namedItem(newPostlist.children[i].id)) {
                                     let res = Vue.compile(newPostlist.children[i].outerHTML)
 
                                     let pageTitle = this.originalPageTitle
@@ -128,6 +124,8 @@ var refresher = new Vue({
                                         render: res.render,
                                         staticRenderFns: res.staticRenderFns,
                                         mounted() {
+                                            if (this.$el.id === "unseen") return
+
                                             this.$nextTick(() => {
                                                 if ("Notification" in window && Notification.permission == "granted") {
                                                     let followingButton = document.querySelector(".threadsubscribe span.is-primary a")

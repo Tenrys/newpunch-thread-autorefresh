@@ -33,120 +33,7 @@ var refresher = new Vue({
         this.checkPageEnded()
 
         this.timerInterval = setInterval(() => {
-            if (this.pageEnded) {
-                let [newPageURL, newPageNum] = this.getNextPage()
-
-                [
-                    document.querySelector(".postpagnation.above .pagnationcomponent"),
-                    document.querySelector(".postpagnation.below .pagnationcomponent")
-                ].forEach(pagination => {
-                    let hasURL = false
-                    for (let i = 0; i < pagination.children.length; i++) {
-                        if (newPageURL.match(pagination.children[i].href)) {
-                            hasURL = true
-                            break
-                        }
-                    }
-
-                    if (!hasURL) {
-                        let newPageLink = document.createElement("a")
-                        newPageLink.href = newPageURL
-                        newPageLink.className = "page"
-                        newPageLink.innerHTML = `<span>${newPageNum}</span>`
-
-                        pagination.appendChild(newPageLink)
-                    }
-                })
-
-                if ("Notification" in window && Notification.permission == "granted") {
-                    new Notification(this.originalPageTitle, {
-                        body: "Page has ended, click to go to new page",
-                        onclick() {
-                            window.location = this.getNextPage()[0]
-                        },
-                        tag: "page-ended",
-                    })
-                }
-
-                clearInterval(this.timerInterval)
-                return
-            }
-
-            if (this.timer < 0 && !this.ajaxHappening) {
-                let ajax = new XMLHttpRequest()
-                ajax.onreadystatechange = () => {
-                    if (ajax.readyState === XMLHttpRequest.DONE) {
-                        if (ajax.status === 200) {
-                            let parser = new DOMParser()
-                            let pageDocument = parser.parseFromString(ajax.responseText, "text/html")
-                            let newPostlist = pageDocument.querySelector('[class="postlist"]')
-
-                            let addedPost = false
-                            for (let i = 0; i < newPostlist.children.length; i++) {
-                                if (!currentPostlist.children[i]) {
-                                    let res = Vue.compile(newPostlist.children[i].outerHTML)
-
-                                    let post = new Vue({
-                                        render: res.render,
-                                        staticRenderFns: res.staticRenderFns
-                                    }).$mount()
-
-                                    // By the way, the "unread" banner gets added as well but apparently never after, thanks to the children index checking. That's convenient..?
-
-                                    currentPostlist.appendChild(post.$el)
-
-                                    post.$nextTick(() => {
-                                        if ("Notification" in window && Notification.permission == "granted") {
-                                            let followingButton = document.querySelector(".threadsubscribe span.is-primary a")
-
-                                            if (followingButton.classList.contains("is-primary")) {
-                                                // To-do: service worker..? Check how much interest there is
-
-                                                new Notification(this.originalPageTitle, {
-                                                    body: `New post from ${post.username}!`,
-                                                    icon: post.avatar,
-                                                    tag: "new-post",
-                                                    onclick() {
-                                                        if (post.$el.scrollIntoView) post.$el.scrollIntoView()
-                                                    },
-                                                    vibrate: [200, 100, 200] // This won't be used but whatever
-                                                })
-                                            }
-                                        }
-                                    })
-
-                                    console.log("Added new post! ", post.$el)
-
-                                    if (!document.hasFocus()) {
-                                        if (post.$el.id !== "unseen") {
-                                            this.newPostCount++
-                                        }
-                                        document.title = `(${this.newPostCount}) ${this.originalPageTitle}`
-                                    }
-
-                                    addedPost = true
-                                }
-                            }
-                            if (!addedPost) {
-                                this.timerLength = Math.min(this.timerLength + 5, 120)
-                            } else {
-                                this.timerLength = 10
-                            }
-
-                            this.checkPageEnded()
-
-                            this.timer = this.timerLength
-                            this.ajaxHappening = false
-                        }
-                    }
-                }
-                ajax.open("GET", location.origin + location.pathname, true)
-                ajax.send()
-
-                this.ajaxHappening = true
-            } else {
-                this.timer--
-            }
+            this.refreshPage()
         }, 1000)
 
         document.addEventListener("focus", () => {
@@ -168,11 +55,132 @@ var refresher = new Vue({
                     if (ajax.readyState === XMLHttpRequest.DONE) {
                         if (ajax.responseURL === newPageURL) {
                             this.pageEnded = true
+
+                            let [newPageURL, newPageNum] = this.getNextPage()
+
+                            [
+                                document.querySelector(".postpagnation.above .pagnationcomponent"),
+                                document.querySelector(".postpagnation.below .pagnationcomponent")
+                            ].forEach(pagination => {
+                                let hasURL = false
+                                for (let i = 0; i < pagination.children.length; i++) {
+                                    if (newPageURL.match(pagination.children[i].href)) {
+                                        hasURL = true
+                                        break
+                                    }
+                                }
+
+                                if (!hasURL) {
+                                    let newPageLink = document.createElement("a")
+                                    newPageLink.href = newPageURL
+                                    newPageLink.className = "page"
+                                    newPageLink.innerHTML = `<span>${newPageNum}</span>`
+
+                                    pagination.appendChild(newPageLink)
+                                }
+                            })
+
+                            if ("Notification" in window && Notification.permission == "granted") {
+                                new Notification(this.originalPageTitle, {
+                                    body: "Page has ended, click to go to new page",
+                                    onclick() {
+                                        window.location = this.getNextPage()[0]
+                                    },
+                                    tag: "page-ended",
+                                })
+                            }
+
+                            clearInterval(this.timerInterval)
                         }
                     }
                 }
                 ajax.open("GET", newPageURL, true)
                 ajax.send()
+            }
+        },
+        refreshPage() {
+            if (this.timer < 0 && !this.ajaxHappening) {
+                let ajax = new XMLHttpRequest()
+                ajax.onreadystatechange = () => {
+                    if (ajax.readyState === XMLHttpRequest.DONE) {
+                        if (ajax.status === 200) {
+                            let parser = new DOMParser()
+                            let pageDocument = parser.parseFromString(ajax.responseText, "text/html")
+
+                            // Remove "unseen" element new page, causes issues
+                            let unseen = pageDocument.querySelector(".postlist #unseen")
+                            if (unseen) unseen.remove()
+
+                            // Add new posts to current postlist
+                            let newPostlist = pageDocument.querySelector('[class="postlist"]')
+                            let addedPost = false
+                            for (let i = 0; i < newPostlist.children.length; i++) {
+                                if (!currentPostlist.children[i]) {
+                                    let res = Vue.compile(newPostlist.children[i].outerHTML)
+
+                                    let pageTitle = this.originalPageTitle
+                                    let post = new Vue({
+                                        render: res.render,
+                                        staticRenderFns: res.staticRenderFns,
+                                        mounted() {
+                                            this.$nextTick(() => {
+                                                if ("Notification" in window && Notification.permission == "granted") {
+                                                    let followingButton = document.querySelector(".threadsubscribe span.is-primary a")
+
+                                                    if (followingButton.classList.contains("is-primary")) {
+                                                        // To-do: service worker..? Check how much interest there is
+
+                                                        let postrender = document.querySelector(`#${this.$el.id} .postrender`).__vue__
+
+                                                        new Notification(pageTitle, {
+                                                            body: `New post from ${postrender.username}!`,
+                                                            icon: postrender.avatar,
+                                                            tag: "new-post",
+                                                            onclick() {
+                                                                if (this.$el.scrollIntoView) this.$el.scrollIntoView()
+                                                            },
+                                                            vibrate: [200, 100, 200] // This won't be used but whatever
+                                                        })
+                                                    }
+                                                }
+                                            })
+                                        }
+                                    }).$mount()
+
+                                    // By the way, the "unread" banner gets added as well but apparently never after, thanks to the children index checking. That's convenient..?
+
+                                    currentPostlist.appendChild(post.$el)
+
+                                    if (!document.hasFocus()) {
+                                        if (post.$el.id !== "unseen") {
+                                            this.newPostCount++
+                                        }
+                                        document.title = `(${this.newPostCount}) ${this.originalPageTitle}`
+                                    }
+
+                                    addedPost = true
+                                    console.log("Added new post! ", post.$el)
+                                }
+                            }
+                            if (!addedPost) {
+                                // this.timerLength = Math.min(this.timerLength + 5, 120)
+                            } else {
+                                this.timerLength = 10
+                            }
+
+                            this.checkPageEnded()
+
+                            this.timer = this.timerLength
+                            this.ajaxHappening = false
+                        }
+                    }
+                }
+                ajax.open("GET", location.origin + location.pathname, true)
+                ajax.send()
+
+                this.ajaxHappening = true
+            } else {
+                this.timer--
             }
         },
         setupNotifications() {

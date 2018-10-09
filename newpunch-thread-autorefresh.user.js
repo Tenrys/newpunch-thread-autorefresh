@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newpunch Thread Auto-refresh
 // @namespace    tenrys.pw
-// @version      0.2
+// @version      0.3
 // @description  Checks for new posts in a thread on an interval and adds them to the page dynamically.
 // @author       Tenrys (https://github.com/Tenrys/newpunch-thread-autorefresh)
 // @include      https://forum.facepunch.com/*
@@ -13,19 +13,23 @@ let currentPostlist = document.querySelector('[class="postlist"]')
 // Check if we're in a thread
 if (!currentPostlist) return
 
-let timerLength = 60
-
 var refresher = new Vue({
     template: String.raw`<button class="button is-dark" disabled title="Thread refresher"> {{ !pageEnded ? (timer > 0 ? "Checking for new posts in " + timer + "..." : "Checking for new posts...") : "Page is over." }} </button>`,
     data() {
         return {
-            timer: timerLength,
+            timer: 10,
+            timerLength: 10,
             ajaxHappening: false,
             pageEnded: false,
-            timerInterval: null
+
+            timerInterval: null,
+            newPostCount: 0,
+            originalPageTitle: document.title
         }
     },
     mounted() {
+        this.setupNotifications()
+
         this.checkPageEnded()
 
         this.timerInterval = setInterval(() => {
@@ -67,6 +71,7 @@ var refresher = new Vue({
                             let pageDocument = parser.parseFromString(ajax.responseText, "text/html")
                             let newPostlist = pageDocument.querySelector('[class="postlist"]')
 
+                            let addedPost = false
                             for (let i = 0; i < newPostlist.children.length; i++) {
                                 if (!currentPostlist.children[i]) {
                                     let res = Vue.compile(newPostlist.children[i].outerHTML)
@@ -79,13 +84,43 @@ var refresher = new Vue({
                                     // By the way, the "unread" banner gets added as well but apparently never after, thanks to the children index checking. That's convenient..?
 
                                     currentPostlist.appendChild(post.$el)
-                                    console.log("Added new new post! ", post.$el)
+
+                                    if ("Notification" in window && Notification.permission == "granted") {
+                                        let followingButton = document.querySelector(".threadsubscribe span.is-primary a")
+
+                                        if (followingButton.classList.contains("is-primary")) {
+                                            // To-do: service worker..? Check how much interest there is
+
+                                            new Notification(this.originalPageTitle, {
+                                                body: `New post from ${post.username}!`,
+                                                icon: post.avatar,
+                                                tag: "new-post",
+                                                vibrate: [200, 100, 200] // This won't be used but whatever
+                                            })
+                                        }
+                                    }
+
+                                    console.log("Added new post! ", post.$el)
+
+                                    if (!document.hasFocus()) {
+                                        if (post.$el.id !== "unseen") {
+                                            this.newPostCount++
+                                        }
+                                        document.title = `(${this.newPostCount}) ${this.originalPageTitle}`
+                                    }
+
+                                    addedPost = true
                                 }
+                            }
+                            if (!addedPost) {
+                                this.timerLength = Math.min(this.timerLength + 5, 120)
+                            } else {
+                                this.timerLength = 10
                             }
 
                             this.checkPageEnded()
 
-                            this.timer = timerLength
+                            this.timer = this.timerLength
                             this.ajaxHappening = false
                         }
                     }
@@ -98,6 +133,11 @@ var refresher = new Vue({
                 this.timer--
             }
         }, 1000)
+
+        document.addEventListener("focus", () => {
+            this.newPostCount = 0
+            document.title = this.originalPageTitle
+        })
     },
     methods: {
         getNextPage() {
@@ -118,6 +158,13 @@ var refresher = new Vue({
                 }
                 ajax.open("GET", newPageURL, true)
                 ajax.send()
+            }
+        },
+        setupNotifications() {
+            if (!("Notification" in window)) {
+                console.warn("Thread auto-refresher userscript: This browser does not support desktop notifications")
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission()
             }
         }
     }

@@ -1,5 +1,7 @@
 # Newpunch Thread Auto-refresh
 
+![Preview](https://tenrys.pw/ShareX/2018/Oct/iSM7.png)
+
 Checks for new posts in a Facepunch forum thread on an interval and adds them to the page dynamically.
 
 # [Install](https://github.com/Tenrys/newpunch-thread-autorefresh/raw/master/newpunch-thread-autorefresh.user.js)

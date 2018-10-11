@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newpunch Thread Auto-refresh
 // @namespace    tenrys.pw
-// @version      0.5.8
+// @version      0.5.9
 // @description  Checks for new posts in a thread on an interval and adds them to the page dynamically.
 // @author       Tenrys (https://github.com/Tenrys/newpunch-thread-autorefresh)
 // @include      https://forum.facepunch.com/*
@@ -14,12 +14,13 @@ let currentPostlist = document.querySelector('[class="postlist"]')
 if (!currentPostlist) return
 
 var refresher = new Vue({
-    template: String.raw`<button class="button is-dark" disabled title="Thread refresher"> {{ !pageEnded ? (timer > 0 ? "Checking for new posts in " + timer + "..." : "Checking for new posts...") : "Page is over." }} </button>`,
+    template: String.raw`<button disabled title="Thread refresher" class="button is-dark" :class="{ 'is-loading': timer < 0, 'is-danger': errored }" style="margin-right: 16px;"> {{ getButtonText() }} </button>`,
     data() {
         return {
             timer: 10,
             timerLength: 10,
             ajaxHappening: false,
+            errored: false,
             pageEnded: false,
             originalPageTitle: document.title,
             updatedOnce: false,
@@ -106,6 +107,18 @@ var refresher = new Vue({
         },
         refreshPage() {
             if (this.timer < 0 && !this.ajaxHappening) {
+                setTimeout(() => { // Could have done this properly with XMLHttpRequest events and error codes but this is simpler.
+                    if (!this.ajaxHappening) return
+
+                    this.errored = true
+                    setTimeout(() => {
+                        this.timer = this.timerLength
+                        this.ajaxHappening = false
+
+                        this.errored = false
+                    }, 3000)
+                }, 10000)
+
                 let ajax = new XMLHttpRequest()
                 ajax.onreadystatechange = () => {
                     if (ajax.readyState === XMLHttpRequest.DONE) {
@@ -143,7 +156,12 @@ var refresher = new Vue({
                                                             vibrate: [200, 100, 200] // This won't be used but whatever
                                                         })
                                                         notification.onclick = () => {
-                                                            if (this.$el.scrollIntoView) this.$el.scrollIntoView()
+                                                            this.newPostCount = 0
+                                                            document.title = this.originalPageTitle
+
+                                                            if (this.$el.scrollIntoView) {
+                                                                this.$el.scrollIntoView()
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -160,6 +178,12 @@ var refresher = new Vue({
                                             this.newPostCount++
                                         }
                                         document.title = `(${this.newPostCount}) ${this.originalPageTitle}`
+                                    }
+
+                                    let focused = document.activeElement
+                                    let threadReply = document.querySelector(".threadreply")
+                                    if (focused.classList.contains("ql-editor") && threadReply.scrollIntoView) {
+                                        threadReply.scrollIntoView()
                                     }
 
                                     addedPost = true
@@ -194,6 +218,13 @@ var refresher = new Vue({
             } else if (Notification.permission !== "denied") {
                 Notification.requestPermission()
             }
+        },
+        getButtonText() {
+            if (!this.pageEnded) {
+                if (this.timer > 0) {
+                    return "Refreshing in " + this.timer + "..."
+                } else return "Refreshing"
+            } else return "Page is over."
         }
     }
 }).$mount()

@@ -9,9 +9,13 @@
 // ==/UserScript==
 
 let currentPostlist = document.querySelector('[class="postlist"]')
+let threadReplyButtons = document.querySelector('.threadreply .actions .field')
 
 // Check if we're in a thread
 if (!currentPostlist) return
+
+// Check if thread is locked
+if (!threadReplyButtons) return
 
 var refresher = new Vue({
     template: String.raw`<button disabled title="Thread refresher" class="button is-dark" :class="{ 'is-loading': timer < 0, 'is-danger': errored }" style="margin-right: 16px;"> {{ getButtonText() }} </button>`,
@@ -229,7 +233,6 @@ var refresher = new Vue({
     }
 }).$mount()
 
-let threadReplyButtons = document.querySelector('.threadreply .actions .field')
 threadReplyButtons.insertBefore(refresher.$el, threadReplyButtons.children[0])
 
 console.log("Loaded auto-refresh userscript!")

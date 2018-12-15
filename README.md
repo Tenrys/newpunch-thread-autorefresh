@@ -1,4 +1,4 @@
-# Newpunch Thread Auto-refresh
+# Facepunch (Newpunch) Thread Auto-refresh / Auto-update
 
 ![Preview](https://tenrys.pw/ShareX/2018/Oct/iSM7.png)
 
